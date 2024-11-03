@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: doctor-office
+spec:
+  replicas: 2  # Number of pod replicas for scalability and availability
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: hemanthkolli99/frontend:latest  # Docker Hub image URL
+        ports:
+        - containerPort: 3001  # Port where the frontend service runs inside the container
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  ports:
+  - protocol: TCP
+    port: 80  # External port
+    targetPort: 3001  # Port inside the container
+  type: LoadBalancer  # Exposes the service to the internet
