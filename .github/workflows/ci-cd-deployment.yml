@@ -1,0 +1,45 @@
+name: CI/CD Pipeline for EKS Deployment
+
+on:
+  push:
+    branches:
+      - main  # Specify the branch to trigger deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1  # Adjust based on your EKS region
+
+    - name: Set up kubectl
+      run: |
+        echo "${{ secrets.KUBECONFIG }}" | base64 --decode > ~/.kube/config
+        aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region us-east-1
+
+    - name: Deploy Backend to EKS
+      run: |
+        kubectl apply -f backend-deployment.yaml
+
+    - name: Deploy Frontend to EKS
+      run: |
+        kubectl apply -f frontend-deployment.yaml
+
+    - name: Verify Backend Deployment
+      run: |
+        kubectl rollout status deployment/backend
+
+    - name: Verify Frontend Deployment
+      run: |
+        kubectl rollout status deployment/frontend
